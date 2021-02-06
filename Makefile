@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -I.
-LDFLAGS =
-OBJFILES = initial.o pic.o main.o
+CFLAGS = -g -Wall
+LDFLAGS = -I.
+OBJFILES = input.o initial.o pic.o main.o
 TARGET = pic1d
 
 all: $(TARGET)

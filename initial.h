@@ -14,8 +14,8 @@ double dx , dt ; // Spatial and time steps
 double * xpar , *vpar ;
 
 //Declare grid
-double * Ex ;
-double * Bz ;
+double *Ex, *Ey, *Ez ;
+double *Bx, *By, *Bz ;
 
 // Auxiliary functions
 void InitialDeclarations( void ) ;

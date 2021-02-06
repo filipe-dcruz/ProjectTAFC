@@ -50,7 +50,7 @@ void DefineInitialValues(){
 
   // initiate grids
   for( int i = 0 ; i < NX ; i++ , x += dx ){
-    Bz[i] = BzInicial( x ) ;
+    Bz[i] = BzInicial( x ) ; Bz[i] = BzInicial( x ) ; Bz[i] = BzInicial( x ) ;
     Ex[i] = ExInicial( x ) ;
   }
 }

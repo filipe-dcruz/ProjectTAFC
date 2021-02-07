@@ -17,36 +17,33 @@ Species::Species(const char *_name ,double _rqm, uint _npar ,
   for ( int i = 0 ; i < NAME_LIMIT && _name[i] ; i++ ){
     name[i] = _name[i] ;
   }
-
 }
 
 //Destructor
 Species::~Species()
 {
-  std::cout<<"iini = " << std::endl;
   delete xval ;
   delete pval ;
-  std::cout<<"iini = " << std::endl;
 
-  free(xpos) ;
-  free(ppos) ;
-  std::cout<<"iini = " << std::endl;
+  //free(xpos) ;
+  //free(ppos) ;
 
 }
 
 void Species::CreateList( uint N , double dx )
 {
+
   // Calculate remaining parameters
   CalculateLastParameters(dx) ;
 
-  size_t aux   = N * sizeof(itr*) ;
+  //size_t aux   = N * sizeof(itr*) ;
 
   // Create list of particles
-  xpos = ( itr** ) malloc(aux) ;
+  //xpos = ( itr* ) malloc(aux) ;
   xval = new std::list<double> ( NParTot ) ;
 
   // Create list of velocities
-  ppos = ( itr** ) malloc(aux) ;
+  //ppos = ( itr* ) malloc(aux) ;
   pval = new std::list<double> ( NParTot ) ;
 
 }

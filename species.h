@@ -3,7 +3,6 @@
 
 #include <list>
 #include <cstdlib>
-#include <iostream>
 
 #define NAME_LIMIT 20
 
@@ -38,11 +37,11 @@ public:
   std::list<double>* pval ;
   std::list<double>* xval ;
 
-  itr** xpos ;
-  itr** ppos ;
+  //itr* xpos ;
+  //itr* ppos ;
 
   //Functions
-  Species ( const char*, double, uint, double, double,
+  Species( const char*, double, uint, double, double,
     double, double, double ) ;
   ~Species () ;
 

@@ -1,7 +1,7 @@
-CC = gcc
+CC = g++
 CFLAGS = -g -Wall
 LDFLAGS = -I.
-OBJFILES = input.o initial.o pic.o main.o
+OBJFILES = species.o input.o initial.o pic.o
 TARGET = pic1d
 
 all: $(TARGET)

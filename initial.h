@@ -1,24 +1,26 @@
 #ifndef INITIAL_HEADER
 #define INITIAL_HEADER
 
-#include <stdio.h>
-#include <stdlib.h> /*exit*/
+#include <iostream>
+#include <random>
 
-# include "input.h"
+#include "input.h"
 
+#define NPARLIMIT 1000
 
 // Secundaty parameters
-double dx , dt ; // Spatial and time steps
+static const double BOX = XF-X0 ;
+static const double dx = BOX/NX ;
+static const double dt = dx*CVAL ; // Spatial and time steps
 
-//Declare array for particles
-double * xpar , *vpar ;
+//Declare grid for electromagnetic fields
+extern double *Ex, *Ey, *Ez ;
+extern double *Bx, *By, *Bz ;
+extern double *xx ;
 
-//Declare grid
-double *Ex, *Ey, *Ez ;
-double *Bx, *By, *Bz ;
-
-// Auxiliary functions
-void InitialDeclarations( void ) ;
+// Auxiliary Functions
+int CheckParameters() ;
+void InitialDefinitions( void ) ;
 void DefineInitialValues( void ) ;
 
 void FinalDeclarations( void ) ;

@@ -1,15 +1,26 @@
 #ifndef SPECIES_HEADER
 #define SPECIES_HEADER
 
+#include <list>
+#include <cstdlib>
+#include <iostream>
+
 #define NAME_LIMIT 20
 
 typedef unsigned int uint ;
+typedef std::list<double>::iterator itr ;
 
 /*
   Define Species that contains the information of the initial and contant
   values for each specie.
 */
-struct Species{
+class Species{
+  uint NParTot ;
+  double qc ;
+
+  void CalculateLastParameters ( double ) ;
+
+public:
   // Variables
   // Global
   char name [NAME_LIMIT]; // Name of species
@@ -23,14 +34,21 @@ struct Species{
   const double x0, xf ;
   const double den ;
 
-  // Arrayes
-  double* pval ;
-  double* xval ;
+  // Arrays
+  std::list<double>* pval ;
+  std::list<double>* xval ;
+
+  itr** xpos ;
+  itr** ppos ;
 
   //Functions
   Species ( const char*, double, uint, double, double,
     double, double, double ) ;
   ~Species () ;
+
+  void CreateList( uint , double ) ;
+
+  uint NumOfPar(){ return NParTot ; };
 } ;
 
 #endif

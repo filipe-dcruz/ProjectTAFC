@@ -1,17 +1,17 @@
 #include "input.h"
 
 //Components of the initial magnetic field
-static inline double InitialFields::BxInicial( double x )
+double InitialFields::BxInicial( double x )
 {
   return 0. ;
 }
 
-static inline double InitialFields::ByInicial( double x )
+double InitialFields::ByInicial( double x )
 {
   return 0 ;
 }
 
-static inline double InitialFields::BzInicial( double x )
+double InitialFields::BzInicial( double x )
 {
   if (x < 0.5 )
     return 0. ;
@@ -20,17 +20,17 @@ static inline double InitialFields::BzInicial( double x )
 }
 
 //Components of the initial electric field
-static inline double InitialFields::ExInicial( double x )
+double InitialFields::ExInicial( double x )
 {
   return 0. ;
 }
 
-static inline double InitialFields::EyInicial( double x )
+double InitialFields::EyInicial( double x )
 {
   return 0. ;
 }
 
-static inline double InitialFields::EzInicial( double x )
+double InitialFields::EzInicial( double x )
 {
   return 0. ;
 }

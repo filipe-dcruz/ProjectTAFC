@@ -23,13 +23,13 @@ const uint NDUMP = 50 ; //Interactions
 // Declaration of initial values
 namespace InitialFields
 {
-  static inline double BxInicial( double x ) ;
-  static inline double ByInicial( double x ) ;
-  static inline double BzInicial( double x ) ;
+  double BxInicial( double x ) ;
+  double ByInicial( double x ) ;
+  double BzInicial( double x ) ;
 
-  static inline double ExInicial( double x ) ;
-  static inline double EyInicial( double x ) ;
-  static inline double EzInicial( double x ) ;
+  double ExInicial( double x ) ;
+  double EyInicial( double x ) ;
+  double EzInicial( double x ) ;
 }
 
 extern Species specie[NSPE] ;

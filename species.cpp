@@ -1,5 +1,12 @@
 #include "species.h"
 
+// Auxiliary functions
+void Species::CalculateLastParameters( double dx )
+{
+  NParTot = int((xf-x0)/dx)*npar ; //Total number of particles
+  qc = den/npar ;
+}
+
 /***Definitions of Species methods***/
 //Constuct
 Species::Species(const char *_name ,double _rqm, uint _npar ,
@@ -10,10 +17,36 @@ Species::Species(const char *_name ,double _rqm, uint _npar ,
   for ( int i = 0 ; i < NAME_LIMIT && _name[i] ; i++ ){
     name[i] = _name[i] ;
   }
+
 }
 
 //Destructor
 Species::~Species()
 {
+  std::cout<<"iini = " << std::endl;
+  delete xval ;
+  delete pval ;
+  std::cout<<"iini = " << std::endl;
+
+  free(xpos) ;
+  free(ppos) ;
+  std::cout<<"iini = " << std::endl;
+
+}
+
+void Species::CreateList( uint N , double dx )
+{
+  // Calculate remaining parameters
+  CalculateLastParameters(dx) ;
+
+  size_t aux   = N * sizeof(itr*) ;
+
+  // Create list of particles
+  xpos = ( itr** ) malloc(aux) ;
+  xval = new std::list<double> ( NParTot ) ;
+
+  // Create list of velocities
+  ppos = ( itr** ) malloc(aux) ;
+  pval = new std::list<double> ( NParTot ) ;
 
 }

@@ -8,9 +8,6 @@
 #include "input.h"
 #include "initial.h"
 
-#define FILE_LIMIT 20
-
-
 bool PrintDiagnostics(double) ;
 
 void ComputePIC( const char *) ;

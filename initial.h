@@ -10,9 +10,12 @@
 #include "input.h"
 
 #define NPARLIMIT 1000
+#define NFIELDS 6
 #define MKDIR 6
-#define RM1 3
+#define RM1 6
 #define RM2 5
+
+#define MAX_FILE_NAME 20
 
 extern char* name_file ;
 
@@ -25,6 +28,10 @@ static const double dt = dx*CVAL ; // Spatial and time steps
 extern double *Ex, *Ey, *Ez ;
 extern double *Bx, *By, *Bz ;
 extern double *xx ;
+
+extern char field_files[NFIELDS][MAX_FILE_NAME];
+
+double* const field_var[NFIELDS] = { Ex,Ey,Ez,Bx,By,Bz } ;
 
 // Auxiliary Functions
 int CheckParameters( void ) ;

@@ -3,14 +3,21 @@
 bool PrintDiagnostics( double t ){
   // Print fields
 
-  const char * fileName ;
   std::ofstream file ;
 
-  file.open(fileName, std::app);
-  for( int i = 0 ; i < N ; i++ ){
-      
+  // Print field values
+  for (int j = 0 ; j < NFIELDS ; j++ ){
+
+    file.open(field_files[j], std::ios::app );
+    file << "t = " << t << std::endl ;
+
+    for( int i = 0 ; i < NX ; i++ ){
+      file << xx[i] << ' ' << field_var[j] << std::endl ;
+    }
+
+    file << std::endl ;
+    file.close();
   }
-  file.close();
 
   //Print fields
   return true ;

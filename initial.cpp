@@ -6,6 +6,11 @@ double *xx ;
 
 char* name_file ;
 
+char field_files[NFIELDS][MAX_FILE_NAME] = {
+  "ex.txt","ey.txt","ez.txt",
+  "bx.txt","by.txt","bz.txt"
+};
+
 /*
   Initiate parameters for the simulation ;
 */
@@ -87,8 +92,9 @@ void InitialDefinitions( const char * dir ){
 
   int len = 0 ;
   while ( dir[len++] );
+  len-- ;
 
-  int add = ( dir[len-2] == '/' ? 0 : 1 ) ;
+  int add = ( dir[len-1] == '/' ? 0 : 1 ) ;
 
   // Check parameters
   if ( CheckParameters() ){
@@ -122,19 +128,31 @@ void InitialDefinitions( const char * dir ){
     command[i] = dir[j] ;
     name_file[j] = dir[j];
   }
-  name_file[len1] = dir[len1];
+  name_file[len] = command[len1];
 
   system(command);
+  std::cout << command << '\n';
 
   // Delete all previous files - case that the directory already existed.
   int len3 = len1 + RM1+RM2 ;
-  char command2[ len3 ] = {"rm "};
-  const char aux[] = "*.txt" ;
-  
-  for ( int i = 3 , j = 0 ; j < len2 ; i++ , j++ ) command2[i] = name_file[j] ;
-  for ( int i = len2 , j = 0 ; j < 5 ; i++ , j++ ) command2[i] = aux[j] ;
+  char command2[ len3 ] = {"rm -r "};
+  const char aux2[] = "*.txt" ;
+
+  for ( int i = RM1 , j = 0 ; j < len2 ; i++ , j++ ) command2[i] = name_file[j] ;
+  for ( int i = RM1+len2 , j = 0 ; j < RM2 ; i++ , j++ ) command2[i] = aux2[j] ;
 
   system(command2);
+  std::cout << command2 << '\n';
+
+  //Change names of files
+  for (int i = 0 ; i < NFIELDS ; i++ ){
+    for( int j = 0 , k = len2 ; j < len2 ; j++ , k++ ){
+      field_files[i][k] = field_files[i][j] ;
+    }
+    for( int j = 0 ; j < len2 ; j++ ){
+      field_files[i][j] = name_file[j];
+    }
+  }
 
 }
 

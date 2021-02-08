@@ -1,7 +1,6 @@
 #include "initial.h"
 
-double *Ex, *Ey, *Ez ;
-double *Bx, *By, *Bz ;
+double *Ex[NDIM], *Bx[NDIM] ;
 double *xx ;
 
 char* name_file ;
@@ -10,6 +9,10 @@ char field_files[NFIELDS][MAX_FILE_NAME] = {
   "ex.txt","ey.txt","ez.txt",
   "bx.txt","by.txt","bz.txt"
 };
+
+double* field_var[NFIELDS] ;
+
+char output_file[MAX_FILE_NAME] = "output.txt" ;
 
 /*
   Initiate parameters for the simulation ;
@@ -41,17 +44,21 @@ int CheckParameters( void ){
 		std::cout << "--WARNING: Courant number is higher than 1.0" << std::endl ;
 
   // Check species
-  // Check species names
-  for( int i = 0 ; i < NSPE ; i++ )
+  // Check if species names are repeated
+  for( int i = 0 ; i < NSPE ; i++ ){
     for( int j = i+1 , k ; j < NSPE ; j++ ){
-      for ( int k = 0 ; k < NAME_LIMIT ; k++)
+
+      for ( int k = 0 ; k < NAME_LIMIT && specie[i].name[k] && specie[j].name[k] ; k++ )
         if( specie[i].name[k] != specie[j].name[k] ) break ;
-      if( k == NAME_LIMIT ){
+
+      if( k == NAME_LIMIT || (!specie[i].name[k] && !specie[j].name[k]) ){
         std::cout << "--ERROR: Species " << i << " and " << j
                   << " have the same name." << std::endl ;
     		return 1;
       }
+
     }
+  }
 
   //Check parameters
   for( int i = 0 ; i < NSPE ; i++ ){
@@ -75,11 +82,13 @@ int CheckParameters( void ){
                 << "\"" << std::endl ;
       return 1 ;
     }
-    if( specie[i].vth == 0. ){
-      std::cout << "ERROR: Thermal velocity is 0. for specie \""
-                << specie[i].name << "\"" << std::endl ;
-      return 1 ;
-    }
+    for( int j = 0 ; j < NDIM ; j++ )
+      if( specie[i].vth[j] == 0. ){
+        std::cout << "ERROR: Thermal velocity is 0. for specie \""
+                  << specie[i].name << "\"" << std::endl ;
+        return 1 ;
+      }
+
   }
 
   return 0. ;
@@ -90,13 +99,15 @@ int CheckParameters( void ){
 */
 void InitialDefinitions( const char * dir ){
 
+  // Get length of directory name
   int len = 0 ;
   while ( dir[len++] );
   len-- ;
 
+  // See if '/' was included
   int add = ( dir[len-1] == '/' ? 0 : 1 ) ;
 
-  // Check parameters
+  // Check if parameters values are okay
   if ( CheckParameters() ){
     std::cout << "Program will terminate..." << std::endl ;
     exit(1) ;
@@ -105,21 +116,22 @@ void InitialDefinitions( const char * dir ){
   size_t aux = NX * sizeof(double) ;
 
   // Define grids
-  Ex = (double *) malloc( aux );
-  Ey = (double *) malloc( aux );
-  Ez = (double *) malloc( aux );
-  Bx = (double *) malloc( aux );
-  By = (double *) malloc( aux );
-  Bz = (double *) malloc( aux );
+  for( int i = 0 ; i < NDIM ; i++ ){
+    Ex[i] = (double *) malloc( aux );
+    Bx[i] = (double *) malloc( aux );
+    field_var[i] = Ex[i] ;
+    field_var[i+NDIM] = Bx[i] ;
+  }
   xx = (double *) malloc( aux );
 
-  // Species
-  for ( int i = 0 ; i < NSPE ; i++ ) specie[i].CreateList( NX , dx ) ;
+
+  // Declare lists for species
+  for ( int i = 0 ; i < NSPE ; i++ ) specie[i].CreateList( NX , dx , dt ) ;
 
   // Create directory for output
   int i = MKDIR , len1 = len + i , len2 = len + add ;
 
-  name_file = new char[len2] ;
+  name_file = new char[len2] ; // Location of directory
 
   char command[ len1 + add ] = {"mkdir "};
   command[len1] = '/' ;
@@ -130,6 +142,7 @@ void InitialDefinitions( const char * dir ){
   }
   name_file[len] = command[len1];
 
+  // Create a new directory for the results
   system(command);
   std::cout << command << '\n';
 
@@ -138,89 +151,108 @@ void InitialDefinitions( const char * dir ){
   char command2[ len3 ] = {"rm -r "};
   const char aux2[] = "*.txt" ;
 
-  for ( int i = RM1 , j = 0 ; j < len2 ; i++ , j++ ) command2[i] = name_file[j] ;
-  for ( int i = RM1+len2 , j = 0 ; j < RM2 ; i++ , j++ ) command2[i] = aux2[j] ;
+  for ( int i = RM1 , j = 0 ; j < len2 ; i++ , j++ )
+    command2[i] = name_file[j] ;
+  for ( int i = RM1+len2 , j = 0 ; j < RM2 ; i++ , j++ )
+    command2[i] = aux2[j] ;
 
+  // Remove files
   system(command2);
   std::cout << command2 << '\n';
 
-  //Change names of files
-  for (int i = 0 ; i < NFIELDS ; i++ ){
-    for( int j = 0 , k = len2 ; j < len2 ; j++ , k++ ){
-      field_files[i][k] = field_files[i][j] ;
-    }
-    for( int j = 0 ; j < len2 ; j++ ){
+  // Change names of output files to add location
+  char * auxN ;
+  for (int i = 0 , l = 0 ; i < NFIELDS ; i++ ){
+    //Calculate size of file's name
+    while(field_files[i][l++]); l-- ;
+
+    // Creates a copy of the name
+    auxN = new char[l];
+    for( int j = 0 ; j < l; j++ ) auxN[j] = field_files[i][j] ;
+
+    // Update name with location
+    for( int j = 0 , k = len2 ; j < l ; j++ , k++ )
+      field_files[i][k] = auxN[j] ;
+    for( int j = 0 ; j < len2 ; j++ )
       field_files[i][j] = name_file[j];
-    }
+
+    delete[] auxN ;
   }
 
+  // For output file of parameters
+  int l = 0 ;
+  while(output_file[l++]); l-- ;
+
+  auxN = new char[l] ;
+  for( int j = 0 ; j < l ; j++ ) auxN[j] = output_file[j] ;
+
+  for( int j = 0 , k = len2 ; j < l ; j++ , k++ )
+    output_file[k] = auxN[j] ;
+  for( int j = 0 ; j < len2 ; j++ )
+    output_file[j] = name_file[j] ;
+
+  delete[] auxN ;
 }
 
 /*
   Define parameters with the setup of the simulation ;
 */
-void DefineInitialValues(void ){
+void DefineInitialValues( void ){
 
   double x = dx/2. ;
 
-  // initiate grids
+  // initiate grids for electromagnetic fields
   for( int i = 0 ; i < NX ; i++ , x += dx ){
-    Ex[i] = InitialFields::ExInicial( x ) ;
-    Ey[i] = InitialFields::EyInicial( x ) ;
-    Ez[i] = InitialFields::EzInicial( x ) ;
-    Bx[i] = InitialFields::BxInicial( x ) ;
-    By[i] = InitialFields::ByInicial( x ) ;
-    Bz[i] = InitialFields::BzInicial( x ) ;
+    Ex[0][i] = InitialFields::ExInicial( x ) ;
+    Ex[1][i] = InitialFields::EyInicial( x ) ;
+    Ex[2][i] = InitialFields::EzInicial( x ) ;
+    Bx[0][i] = InitialFields::BxInicial( x ) ;
+    Bx[1][i] = InitialFields::ByInicial( x ) ;
+    Bx[2][i] = InitialFields::BzInicial( x ) ;
     xx[i] = x ;
   }
 
   // Species
   for ( int i = 0 ; i < NSPE ; i++ ){
 
-    // Auxiliary
+    // Auxiliary - distances between particles
     double auxDx  = ( specie[i].xf - specie[i].x0 ) / specie[i].NumOfPar() ;
     double auxDx2 = auxDx / 2. ;
 
     x = specie[i].x0+auxDx2 ;
 
-    // Random generator for each specie
-    std::default_random_engine generator;
-    std::normal_distribution<double> distribution(specie[i].v0,specie[i].vth);
+    // Random generator for each specie for the Maxwellian distribution
+    for ( int j = 0 ; j < NDIM ; j++ ){
+      std::default_random_engine generator;
+      std::normal_distribution<double> distribution(
+        specie[i].v0[j],specie[i].vth[j]);
 
-    //Ignore initial cells without particles
-    //int ini = int((x-X0)/dx) ;
-    //for( int j = 0 ; j < ini ; j++ ){
-    //  specie[i].xpos[j] = NULL ;
-    //  specie[i].ppos[j] = NULL ;
-    //}
+      itr it1 = specie[i].xval[j]->begin() ;
+      itr it2 = specie[i].pval[j]->begin() ;
 
-    itr it1 = specie[i].xval->begin() ;
-    itr it2 = specie[i].pval->begin() ;
+      // Uniform distribution of particles
+      for( ; it1 != specie[i].xval[j]->end() ; it1++ , it2++ , x += auxDx ){
+        *it1=x ;                      // Add position
+        *it2=distribution(generator); // Add velocity
+      }
 
-    // Uniform distribution of particles
-    for( ; it1 != specie[i].xval->end() ; it1++ , it2++ , x += auxDx ){
-      *it1=x ;
-      *it2=distribution(generator);
-      //if( xx[ini] < x ) {
-      //  specie[i].xpos[ini]   = it1 ;
-      //  specie[i].ppos[ini++] = it2 ;
-      //}
+      // Quick way to deal with other components
+      x = 0. ;
+      auxDx = 0. ;
     }
 
-    // Ignore final cells without particules
-    //for( int j = ini ; j < NX ; j++ ){
-    //  specie[i].xpos[j] = NULL ;
-    //  specie[i].ppos[j] = NULL ;
-    //}
   }
 }
 
 void FinalDeclarations( void ){
-  // Free memory
-  free(Ex); free(Ey); free(Ez);
-  free(Bx); free(By); free(Bz);
-  free(xx);
-
   // free name of directory
   free(name_file);
+
+  // Free memory of grids
+  for ( int i = 0 ; i < NDIM ; i++ ){
+    free(Ex[i]);
+    free(Bx[i]);
+  }
+  free(xx);
+
 }

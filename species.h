@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #define NAME_LIMIT 20
+#define NDIM 3
 
 typedef unsigned int uint ;
 typedef std::list<double>::iterator itr ;
@@ -16,8 +17,9 @@ typedef std::list<double>::iterator itr ;
 class Species{
   uint NParTot ;
   double qc ;
+  double ql ;
 
-  void CalculateLastParameters ( double ) ;
+  void CalculateLastParameters ( double , double ) ;
 
 public:
   // Variables
@@ -27,27 +29,27 @@ public:
   const uint npar ; //Number of particles per cell of this specie
 
   // Velocity
-  const double v0 ;
-  const double vth ;
+  const double v0[NDIM] ;
+  const double vth[NDIM] ;
 
   const double x0, xf ;
   const double den ;
 
   // Arrays
-  std::list<double>* pval ;
-  std::list<double>* xval ;
+  std::list<double>* pval[NDIM] ;
+  std::list<double>* xval[NDIM] ;
 
-  //itr* xpos ;
-  //itr* ppos ;
+  double * density ;
 
   //Functions
-  Species( const char*, double, uint, double, double,
-    double, double, double ) ;
+  Species( const char*, const double, const uint, const double*, const double*,
+    const double, const double, const double ) ;
   ~Species () ;
 
-  void CreateList( uint , double ) ;
+  void CreateList( uint , double , double ) ;
 
   uint NumOfPar(){ return NParTot ; };
+  double ql(){ return ql ; };
 } ;
 
 #endif

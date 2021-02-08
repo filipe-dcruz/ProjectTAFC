@@ -17,6 +17,9 @@
 
 #define MAX_FILE_NAME 20
 
+//Auxiliary
+const int NX1 = NX-1 ;
+
 extern char* name_file ;
 
 // Secundaty parameters
@@ -25,13 +28,13 @@ static const double dx = BOX/NX ;
 static const double dt = dx*CVAL ; // Spatial and time steps
 
 //Declare grid for electromagnetic fields
-extern double *Ex, *Ey, *Ez ;
-extern double *Bx, *By, *Bz ;
-extern double *xx ;
+extern double* Ex[NDIM], *Bx[NDIM] ;
+extern double* xx ;
+
+extern char output_file[MAX_FILE_NAME] ;
 
 extern char field_files[NFIELDS][MAX_FILE_NAME];
-
-double* const field_var[NFIELDS] = { Ex,Ey,Ez,Bx,By,Bz } ;
+extern double* field_var[NFIELDS] ;
 
 // Auxiliary Functions
 int CheckParameters( void ) ;

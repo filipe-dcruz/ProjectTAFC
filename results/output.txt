@@ -1,0 +1,6 @@
+Number of cores = 4
+Number of species = 4
+DX = 0.01
+BOX = 1
+DT = 0.01
+TMAX = 1

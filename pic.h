@@ -10,6 +10,8 @@
 
 bool PrintDiagnostics(double) ;
 
+void CalculateNewPosVel() ;
+
 void ComputePIC( const char *) ;
 
 void ProduceDiagnostics(void) ;

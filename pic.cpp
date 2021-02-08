@@ -161,6 +161,8 @@ void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
 
 void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
 
+  static const double offset[NDIM] = {BOX,0.,0.};
+
   static int num ;
   static double ql ;
 
@@ -192,7 +194,6 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
 
       // Swap necessary particles
       if ( xval1[spe][0][j] < xval1[spe][0][k] ){
-
         for ( int dim = 0 ; dim < NDIM ; dim++ ){
           std::swap(*it1[dim],*it11[dim]) ;
           std::swap(*it2[dim],*it21[dim]) ;
@@ -207,8 +208,11 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
         for ( int dim = 0 ; dim < NDIM ; dim++ ){
           it1[dim]++ ;
           it2[dim]++ ;
+          it21[dim]++;
+          it11[dim]++;
         }
       }
+
     }
 
     // Auxiliary
@@ -221,18 +225,21 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
       it21[dim]-- ;
     }
 
-    static bool t1 = (*(it1[0]) < 0.) , t2 = (*(it1[0]) > BOX);
+    bool t1 = (*(it1[0]) < 0.) , t2 = (*(it11[0]) > BOX);
 
     // Swap border particles
     // If first passed to last
-    if( !(t1 && t2) ){ // Swap both ends
+    if( t1 && t2 ){ // Swap both ends
       for ( int dim = 0 ; dim < NDIM ; dim++ ){
-        std::swap(*(it1[dim]),*(it21[dim])) ;
-        std::swap(*(it1[dim]),*(it21[dim])) ;
+        *(it1[dim]) += offset[dim] ;
+        *(it11[dim]) -= offset[dim] ;
+        std::swap(*(it1[dim]),*(it11[dim])) ;
+        std::swap(*(it2[dim]),*(it21[dim])) ;
       }
     }
     else if ( t1 ){
       for ( int dim = 0 ; dim < NDIM ; dim++ ){
+        *(it1[dim]) += offset[dim] ;
         specie[spe].xval[dim]->push_back(*(it1[dim])) ; // Add Last
         specie[spe].pval[dim]->push_back(*(it2[dim])) ; // Add Last
         specie[spe].xval[dim]->pop_front() ;            // Remove first
@@ -241,8 +248,9 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
     }
     else if ( t2 ){
       for ( int dim = 0 ; dim < NDIM ; dim++ ){
+        *(it11[dim]) -= offset[dim] ;
         specie[spe].xval[dim]->push_front(*(it11[dim])) ; // Add First
-        specie[spe].pval[dim]->push_front(*(it21[dim])) ; // Add Firs
+        specie[spe].pval[dim]->push_front(*(it21[dim])) ; // Add First
         specie[spe].xval[dim]->pop_back() ;            // Remove Last
         specie[spe].pval[dim]->pop_back() ;            // Remove Last
       }
@@ -293,8 +301,8 @@ void ComputePIC( const char * dir ){
     // Update data
     UpdateData(xval1,pval1) ;
 
-    // Update density
-
+    // Update density from the updated positions
+    CalculateTheDensity() ;
 
   }
 

@@ -16,7 +16,7 @@ double InitialFields::BzInicial( double x )
   if ( x < 3.0 )
     return 0. ;
   else
-    return 1.0 ;
+    return 0.0 ;
 }
 
 //Components of the initial electric field
@@ -43,12 +43,12 @@ static const double vthAux2[NDIM] = {0.01,0.01,0.01} ;
 
 // Define species
 Species specie[NSPE] = {
-   Species("ions"        ,100.,100,
+   Species("ions"        ,100.,1,
     v0Aux1,vthAux1,0.,3.0,1.),
-   Species("electrons"   ,-1. ,100,
+   Species("electrons"   ,-1. ,1,
     v0Aux1,vthAux2,0.,3.0,1.),
-   Species("bg-ions"     ,100.,100,
+   Species("bg-ions"     ,100.,1,
     v0Aux2,vthAux1,3.0,6.0,1.),
-   Species("bg-electrons",-1. ,100,
+   Species("bg-electrons",-1. ,1,
     v0Aux2,vthAux2,3.0,6.0,1.)
 };

@@ -49,6 +49,8 @@ int CheckParameters( void ) ;
 void InitialDefinitions( const char * ) ;
 void DefineInitialValues( void ) ;
 
+void CalculateTheDensity( void ) ;
+
 void FinalDeclarations( void ) ;
 
 #endif

@@ -9,7 +9,7 @@
 static const double CVAL = 0.99 ; // Courant number
 
 // Spatial parameters
-#define NX 600                      // Number of cells
+#define NX 60                     // Number ofdddw cells
 static const double X0 = 0.0 ;
 static const double XF = 6.0 ;
 
@@ -18,8 +18,8 @@ static const double TMIN = 0.0 ;
 static const double TMAX = 100.0 ;
 
 // Diagnostics
-const uint NDUMP = 50 ; //Interactions
-const double DUMP_PER = 0.05 ;
+const uint NDUMP = 1 ; //Interactions
+const double DUMP_PER = 1.0 ;
 
 // Declaration of initial values
 namespace InitialFields

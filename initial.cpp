@@ -227,6 +227,53 @@ void InitialDefinitions( const char * dir ){
 }
 
 /*
+  Auxiliar function to calculate the density from the
+  positions of the particles
+*/
+void CalculateTheDensity( void ){
+
+  static itr it1 , it2 ;
+  static double qcval , aux ;
+  int j , k;
+
+  for ( int i = 0 ; i < NSPE ; i++ ){
+    // Calculate density
+    qcval = specie[i].qcvalue() / dx ;
+    it1 = specie[i].xval[0]->begin() ;
+    it2 = specie[i].xval[0]->end() ;
+
+    for ( j = 0 ; j < NX ; j++ ) specie[i].density[j] = 0. ;
+
+    // Left particles
+    while( (aux = xx[1]-(*it1)) > 0. && it1 != it2 ){
+      specie[i].density[0] += dx-(*it1-xx[0]) ;
+      specie[i].density[1] += dx-aux ;
+      it1++;
+    }
+
+    // Middle particles
+    for ( j = 1 , k = 2 ; j < NX1 ; j++ , k++ ){
+      while( (aux = xx[k]-(*it1)) > 0. && it1 != it2 ){
+        specie[i].density[j] += dx-(*it1-xx[j]);
+        specie[i].density[k] += dx-aux ;
+        it1++;
+      }
+    //  std::cin.get() ;
+    }
+
+    // Right particles
+    while( (aux = BOX-(*it1)) > 0. && it1 != it2 ){ // Right side particles
+      specie[i].density[NX1] += dx-(*it1-xx[NX1]) ;
+      specie[i].density[0] += dx-aux ;
+      it1++;
+    }
+
+    //Multiple by cloud charge
+    for ( j = 0 ; j < NX ; j++ ) specie[i].density[j] *= qcval ;
+  }
+}
+
+/*
   Define parameters with the setup of the simulation ;
 */
 void DefineInitialValues( void ){
@@ -274,44 +321,11 @@ void DefineInitialValues( void ){
       x = 0. ;
       auxDx = 0. ;
     }
-
-    // Calculate density
-    double qcval = specie[i].qcvalue() / dx ;
-    it1 = specie[i].xval[0]->begin() ;
-    it2 = specie[i].xval[0]->end() ;
-
-    double aux ;
-
-    for ( j = 0 ; j < NX ; j++ ) specie[i].density[j] = 0. ;
-
-    // Left particles
-    while( (aux = xx[1]-(*it1)) > 0. && it1 != it2 ){
-      specie[i].density[0] += dx-(*it1-xx[0]) ;
-      specie[i].density[1] += dx-aux ;
-      it1++;
-    }
-
-    // Middle particles
-    for ( j = 1 , k = 2 ; j < NX1 ; j++ , k++ ){
-      while( (aux = xx[k]-(*it1)) > 0. && it1 != it2 ){
-        specie[i].density[j] += dx-(*it1-xx[j]);
-        specie[i].density[k] += dx-aux ;
-        it1++;
-      }
-    //  std::cin.get() ;
-    }
-
-    // Right particles
-    while( (aux = BOX-(*it1)) > 0. && it1 != it2 ){ // Right side particles
-      specie[i].density[NX1] += dx-(*it1-xx[NX1]) ;
-      specie[i].density[0] += dx-aux ;
-      it1++;
-    }
-
-    //Multiple by cloud charge
-    for ( j = 0 ; j < NX ; j++ ) specie[i].density[j] *= qcval ;
-
   }
+
+  // Calculate the density from the particle positions
+  CalculateTheDensity() ;
+
 }
 
 void FinalDeclarations( void ){

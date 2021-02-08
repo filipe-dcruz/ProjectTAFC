@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -Iinclude
 LDFLAGS = -I.
 OBJFILES = species.o input.o initial.o pic.o
 TARGET = pic1d

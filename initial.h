@@ -20,7 +20,7 @@
 #define MAX_FILE_NAME 30
 
 // Auxiliary
-const int NX1 = NX-1 ;
+const int NX1 = NX-1 , NX2 = NX-2;
 
 // Name of directory
 extern char* name_file ;

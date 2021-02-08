@@ -21,7 +21,7 @@ class Species{
   double qc ;
   double ql ;
 
-  void CalculateLastParameters ( double , double ) ;
+  void CalculateLastParameters ( double , double , double ) ;
 
 public:
   // Variables
@@ -34,7 +34,7 @@ public:
   const double v0[NDIM] ;
   const double vth[NDIM] ;
 
-  const double x0, xf ;
+  double x0, xf ;
   const double den ;
 
   // Arrays
@@ -48,10 +48,11 @@ public:
     const double, const double, const double ) ;
   ~Species () ;
 
-  void CreateList( uint , double , double ) ;
+  void CreateList( uint , double , double , double ) ;
 
   uint NumOfPar(){ return NParTot ; };
   double qlvalue(){ return ql ; };
+  double qcvalue(){ return qc ; };
 };
 
 #endif

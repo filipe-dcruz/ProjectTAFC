@@ -130,7 +130,7 @@ void InitialDefinitions( const char * dir ){
 
 
   // Declare lists for species
-  for ( int i = 0 ; i < NSPE ; i++ ) specie[i].CreateList( NX , dx , dt ) ;
+  for ( int i = 0 ; i < NSPE ; i++ ) specie[i].CreateList( NX , dx , dt , X0) ;
 
   // Create directory for output
   int i = MKDIR , len1 = len + i , len2 = len + add ;
@@ -231,7 +231,9 @@ void InitialDefinitions( const char * dir ){
 */
 void DefineInitialValues( void ){
 
-  double x = dx/2. ;
+  static double x = dx/2. ; // X0 removed for convinience
+  static itr it1, it2 ;
+  int j , k ;
 
   // initiate grids for electromagnetic fields
   for( int i = 0 ; i < NX ; i++ , x += dx ){
@@ -254,13 +256,13 @@ void DefineInitialValues( void ){
     x = specie[i].x0+auxDx2 ;
 
     // Random generator for each specie for the Maxwellian distribution
-    for ( int j = 0 ; j < NDIM ; j++ ){
+    for ( j = 0 ; j < NDIM ; j++ ){
       std::default_random_engine generator;
       std::normal_distribution<double> distribution(
         specie[i].v0[j],specie[i].vth[j]);
 
-      itr it1 = specie[i].xval[j]->begin() ;
-      itr it2 = specie[i].pval[j]->begin() ;
+      it1 = specie[i].xval[j]->begin() ;
+      it2 = specie[i].pval[j]->begin() ;
 
       // Uniform distribution of particles
       for( ; it1 != specie[i].xval[j]->end() ; it1++ , it2++ , x += auxDx ){
@@ -272,6 +274,42 @@ void DefineInitialValues( void ){
       x = 0. ;
       auxDx = 0. ;
     }
+
+    // Calculate density
+    double qcval = specie[i].qcvalue() / dx ;
+    it1 = specie[i].xval[0]->begin() ;
+    it2 = specie[i].xval[0]->end() ;
+
+    double aux ;
+
+    for ( j = 0 ; j < NX ; j++ ) specie[i].density[j] = 0. ;
+
+    // Left particles
+    while( (aux = xx[1]-(*it1)) > 0. && it1 != it2 ){
+      specie[i].density[0] += dx-(*it1-xx[0]) ;
+      specie[i].density[1] += dx-aux ;
+      it1++;
+    }
+
+    // Middle particles
+    for ( j = 1 , k = 2 ; j < NX1 ; j++ , k++ ){
+      while( (aux = xx[k]-(*it1)) > 0. && it1 != it2 ){
+        specie[i].density[j] += dx-(*it1-xx[j]);
+        specie[i].density[k] += dx-aux ;
+        it1++;
+      }
+    //  std::cin.get() ;
+    }
+
+    // Right particles
+    while( (aux = BOX-(*it1)) > 0. && it1 != it2 ){ // Right side particles
+      specie[i].density[NX1] += dx-(*it1-xx[NX1]) ;
+      specie[i].density[0] += dx-aux ;
+      it1++;
+    }
+
+    //Multiple by cloud charge
+    for ( j = 0 ; j < NX ; j++ ) specie[i].density[j] *= qcval ;
 
   }
 }

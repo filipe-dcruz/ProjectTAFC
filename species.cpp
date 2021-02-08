@@ -1,11 +1,14 @@
 #include "species.h"
 
 // Auxiliary functions
-void Species::CalculateLastParameters( double dx , double dt )
+void Species::CalculateLastParameters( double dx , double dt , double X0_ )
 {
   NParTot = int((xf-x0)/dx)*npar ; //Total number of particles
   qc = den/npar ;
   ql = rqm/2.*dt ;
+
+  xf -= X0_ ;
+  x0 -= X0_ ;
 }
 
 /***Definitions of Species methods***/
@@ -33,10 +36,10 @@ Species::~Species()
 
 }
 
-void Species::CreateList( uint N , double dx , double dt )
+void Species::CreateList( uint N , double dx , double dt , double X0_ )
 {
   // Calculate remaining parameters
-  CalculateLastParameters(dx,dt) ;
+  CalculateLastParameters(dx,dt,X0_) ;
 
   // Create list of particles and velocities
   for( int i = 0 ; i < NDIM ; i++ ){

@@ -302,7 +302,6 @@ void PIC1D( const char * dir = "results/"){
 }
 
 int main(int argc, char const *argv[]) {
-
 	//Run PIC code
   if ( argc > 1 )
     PIC1D(argv[1]) ;
@@ -310,5 +309,4 @@ int main(int argc, char const *argv[]) {
     PIC1D() ;
 
 	return 0. ;
-
 }

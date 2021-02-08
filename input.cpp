@@ -35,7 +35,7 @@ double InitialFields::EzInicial( double x )
   return 0. ;
 }
 
-//Auxiliary
+//Auxiliary vectors for velocity
 static const double v0Aux1[NDIM] = {0.1,0.,0.} ;
 static const double v0Aux2[NDIM] = {-0.1,0.,0.} ;
 static const double vthAux1[NDIM] = {0.001,0.001,0.001} ;

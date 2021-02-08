@@ -19,9 +19,10 @@
 
 #define MAX_FILE_NAME 30
 
-//Auxiliary
+// Auxiliary
 const int NX1 = NX-1 ;
 
+// Name of directory
 extern char* name_file ;
 
 // Secundaty parameters

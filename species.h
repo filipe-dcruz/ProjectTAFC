@@ -52,6 +52,6 @@ public:
 
   uint NumOfPar(){ return NParTot ; };
   double qlvalue(){ return ql ; };
-} ;
+};
 
 #endif

@@ -286,5 +286,4 @@ void FinalDeclarations( void ){
     free(Bx[i]);
   }
   free(xx);
-
 }

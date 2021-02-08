@@ -46,5 +46,4 @@ void Species::CreateList( uint N , double dx , double dt )
 
   // Calculate the density
   density = new double[N] ;
-
 }

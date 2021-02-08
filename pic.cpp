@@ -84,7 +84,7 @@ void ComputePIC( const char * dir ){
   double* pval1[NSPE][NDIM] ;
   double* xval1[NSPE][NDIM] ;
 
-  itr it1[NDIM] , it2[NDIM] ;
+  itr it1[NDIM] , it2[NDIM] , it11[NDIM] , it21[NDIM] ;
 
   // Auxiliary vectors for Boris Pusher
   double u[NDIM] , h[NDIM] , s[NDIM], ul[NDIM] ;
@@ -109,6 +109,8 @@ void ComputePIC( const char * dir ){
   int i = 0 ;
   for ( double t = 0. ; t < TMAX ; t += dt , i++ ){ // Time steps
 
+    std::cout << "t = " << t << '\n';
+
     // Print Diagnostics
     if ( i % NDUMP == 0 ){
       if( !PrintDiagnostics(t) ){
@@ -122,12 +124,16 @@ void ComputePIC( const char * dir ){
       num = specie[spe].NumOfPar() ; //Number of Particles of specie.
       ql = specie[spe].qlvalue()/dx ;
 
+      std::cout << "Updated positions" << '\n';
       for ( int dim = 0 ; dim < NDIM ; dim++ ){
         it1[dim] = specie[spe].xval[dim]->begin() ;
         it2[dim] = specie[spe].pval[dim]->begin() ;
       }
 
+      std::cout << "j" << '\n';
       for( int j = 0 ; j < num ; j++ ){ // Particles are in order.
+        std::cout << "k" << '\n';
+
         // Where is the particle located
         int index = int(*it1[0]/dx) ;
         int index1 = index+1 ;
@@ -136,7 +142,7 @@ void ComputePIC( const char * dir ){
         if ( index == NX ) index1 = 0 ;
 
         for( int dim = 0 ; dim < NDIM ; dim++ ){ //Scan dimensions
-
+          std::cout << index << '\n';
           // Calculate electric field q'E_k
           p1 = xx[index1]-(*it1[dim]) ;
           p2 = (*it1[dim])-xx[index] ;
@@ -151,6 +157,7 @@ void ComputePIC( const char * dir ){
           // Calculate s vector (Wiki notation)
           s[dim] = 2*h[dim] ;
         }
+        std::cout << "Updated"<<j<<' '<<spe << '\n';
 
         // Finish s calculation
         double aux = 1. ;
@@ -175,13 +182,57 @@ void ComputePIC( const char * dir ){
           it1[dim]++;
           it2[dim]++;
         }
+      }
+    }
 
-        // Upgrade data
-        for ( int j = 1 , k = 0 ; j < num ; j++ , k++ ){
-          it1[dim] = specie[spe].xval[dim]->begin() ;
-          if ( xval1[j] < xval1[k] ) // Swap necessary
+    for( int spe = 0 ; spe < NSPE ; spe++ ){ // Loop species
+
+      std::cout << "Updated positions" << '\n';
+
+      // Set iterators to Upgrade data
+      for ( int dim = 0 ; dim < NDIM ; dim++ ){
+        it11[dim] = specie[spe].xval[dim]->begin() ;
+        it21[dim] = specie[spe].pval[dim]->begin() ;
+        it1[dim] = it11[dim]++ ;
+        it2[dim] = it21[dim]++ ;
+
+        // update the first elements j = 0
+        (*it1[dim]) = xval1[spe][dim][0] ;
+        (*it2[dim]) = pval1[spe][dim][0] ;
+      }
+
+      std::cout << "Updated int" << '\n';
+
+      // Upgrade data
+      for ( int j = 1 , k = 0 ; j < num ; j++ , k++ )
+      {
+        // Update values
+        std::cout << spe << ' ' << j<< ' '<< num << ' ' << xval1[spe][0][j] << '\n';
+        for ( int dim = 0 ; dim < NDIM ; dim++ ){
+          (*it11[dim]) = xval1[spe][dim][j] ;
+          (*it21[dim]) = pval1[spe][dim][j] ;
         }
+        std::cout << "oi"<< j <<' '<< k << '\n';
 
+        // Swap necessary particles
+        if ( xval1[spe][0][j] < xval1[spe][0][k] ){
+          std::cout << "o" << '\n';
+          for ( int dim = 0 ; dim < NDIM ; dim++ ){
+            std::swap(*it1[dim],*(it11[dim])) ;
+            std::swap(*it2[dim],*(it21[dim])) ;
+            it1[dim]++;it2[dim]++;
+          }
+          j++; k++;
+        }
+        std::cout << "oi2" << '\n';
+
+        //Increment iterators
+        if ( it1[0] != specie[spe].xval[0]->end() ){ // If it there is no more elements
+          for ( int dim = 0 ; dim < NDIM ; dim++ ){
+            it1[dim]++ ;
+            it2[dim]++ ;
+          }
+        }
       }
 
     }

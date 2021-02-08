@@ -19,6 +19,7 @@ static const double TMAX = 1.0 ;
 
 // Diagnostics
 const uint NDUMP = 50 ; //Interactions
+const double DUMP_PER = 0.1 ; 
 
 // Declaration of initial values
 namespace InitialFields

@@ -3,12 +3,14 @@
 
 #include <list>
 #include <cstdlib>
+#include <iostream>
 
 #define NAME_LIMIT 20
 #define NDIM 3
 
 typedef unsigned int uint ;
 typedef std::list<double>::iterator itr ;
+typedef std::list<double> type ;
 
 /*
   Define Species that contains the information of the initial and contant
@@ -49,7 +51,7 @@ public:
   void CreateList( uint , double , double ) ;
 
   uint NumOfPar(){ return NParTot ; };
-  double ql(){ return ql ; };
+  double qlvalue(){ return ql ; };
 } ;
 
 #endif

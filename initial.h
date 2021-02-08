@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <random>
+#include <cstdlib>
+#include <ctime>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -15,7 +17,7 @@
 #define RM1 6
 #define RM2 5
 
-#define MAX_FILE_NAME 20
+#define MAX_FILE_NAME 30
 
 //Auxiliary
 const int NX1 = NX-1 ;
@@ -35,6 +37,11 @@ extern char output_file[MAX_FILE_NAME] ;
 
 extern char field_files[NFIELDS][MAX_FILE_NAME];
 extern double* field_var[NFIELDS] ;
+
+extern char density_files[NSPE][MAX_FILE_NAME] ;
+static const char density_name[MAX_FILE_NAME] = "-density.txt" ;
+extern char val_files[NSPE][MAX_FILE_NAME] ;
+static const char val_name[MAX_FILE_NAME] = "-val.txt" ;
 
 // Auxiliary Functions
 int CheckParameters( void ) ;

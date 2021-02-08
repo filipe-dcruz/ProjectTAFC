@@ -1,25 +1,76 @@
 #include "pic.h"
 
 bool PrintDiagnostics( double t ){
-  // Print fields
 
-  std::ofstream file ;
+  std::cout << "DUMP at t = " << t << '\n';
+
+  static std::ofstream file , file2 ;
+
+  static int aux , aux2 , random ;
+
+  itr it1[NDIM] , it2[NDIM];
 
   // Print field values
   for ( int j = 0 ; j < NFIELDS ; j++ ){
 
     file.open(field_files[j], std::ios::app );
+    if ( !file ) return false ;
+
     file << "t = " << t << std::endl ;
 
-    for( int i = 0 ; i < NX ; i++ ){
+    for( int i = 0 ; i < NX ; i++ )
       file << xx[i] << ' ' << field_var[j][i] << std::endl ;
-    }
 
     file << std::endl ;
     file.close();
   }
 
-  //Print fields
+  // Print particles values
+  for ( int j = 0 ; j < NSPE ; j++ ){
+
+    file.open(density_files[j], std::ios::app );
+    file2.open(val_files[j], std::ios::app );
+
+    if ( !file || !file2 ) return false ;
+
+    // Print to density files
+    file << "t = " << t << std::endl ;
+    for( int i = 0 ; i < NX ; i++ )
+      file << xx[i] << ' ' << specie[j].density[i] << std::endl ;
+
+    // Print to x and p files
+    file2 << "t = " << t << std::endl ;
+    aux = specie[j].NumOfPar() ;
+    aux2 = int(double(aux)*DUMP_PER) ;
+
+    for ( int k = 0 ; k < NDIM ; k++ ){
+      it1[k] = specie[j].xval[k]->begin();
+      it2[k] = specie[j].pval[k]->begin();
+    }
+
+    while( it1[0] != specie[j].xval[0]->end() ){
+
+      // Obtain random to determine which particles to report
+      random = rand() % aux ;
+
+      if ( random < aux2 ){
+        for ( int k = 0 ; k < NDIM ; k++ ) file2 << *it1[k] << ' ' ;
+        for ( int k = 0 ; k < NDIM ; k++ ) file2 << *it2[k] << ' ' ;
+        file2 << std::endl ;
+      }
+
+      // increment iterators
+      for ( int k = 0 ; k < NDIM ; k++ ) {
+        it1[k]++;
+        it2[k]++;
+      }
+
+    }
+
+    file.close();
+    file2.close();
+  }
+
   return true ;
 }
 
@@ -30,28 +81,56 @@ void CalculateNewPosVel() {
 void ComputePIC( const char * dir ){
 
   // k+1 variables
-  std::list<double>* pval1[NSPE][NDIM] ;
-  std::list<double>* xval1[NSPE][NDIM] ;
+  double* pval1[NSPE][NDIM] ;
+  double* xval1[NSPE][NDIM] ;
+
+  itr it1[NDIM] , it2[NDIM] ;
 
   // Auxiliary vectors for Boris Pusher
-  double u[NDIM] , h[NDIM] , s[NDIM];
-  double Ek[NDIM] ;
+  double u[NDIM] , h[NDIM] , s[NDIM], ul[NDIM] ;
+  double Ek[NDIM] , auxV1[NDIM] , auxV2[NDIM] ;
 
   //Auxiliary variable
   double ql ;
   int num ;
 
+  // Proportions
+  double p1, p2 ;
+
+  // Allocate memory
+  for( int i = 0 ; i < NSPE ; i++ )
+    for( int j = 0 ; j < NDIM ; j++ ){
+      pval1[i][j] = new double [specie[i].NumOfPar()];
+      xval1[i][j] = new double [specie[i].NumOfPar()];
+    }
+
+
   // Run each time steps of the PIC code
   int i = 0 ;
   for ( double t = 0. ; t < TMAX ; t += dt , i++ ){ // Time steps
+
+    // Print Diagnostics
+    if ( i % NDUMP == 0 ){
+      if( !PrintDiagnostics(t) ){
+        std::cout << "Error in printing the output files." << std::endl ;
+        exit(1);
+      }
+    }
+
     //Step 1 - Compute new positions
     for( int spe = 0 ; spe < NSPE ; spe++ ){ // Loop species
       num = specie[spe].NumOfPar() ; //Number of Particles of specie.
-      ql = specie[spe].ql() ;
+      ql = specie[spe].qlvalue()/dx ;
+
+      for ( int dim = 0 ; dim < NDIM ; dim++ ){
+        it1[dim] = specie[spe].xval[dim]->begin() ;
+        it2[dim] = specie[spe].pval[dim]->begin() ;
+      }
 
       for( int j = 0 ; j < num ; j++ ){ // Particles are in order.
         // Where is the particle located
-        int index = int(specie[spe].xval[0][j]/DX) , index1 = index+1;
+        int index = int(*it1[0]/dx) ;
+        int index1 = index+1 ;
 
         //In the case that the particles are in right border
         if ( index == NX ) index1 = 0 ;
@@ -59,49 +138,61 @@ void ComputePIC( const char * dir ){
         for( int dim = 0 ; dim < NDIM ; dim++ ){ //Scan dimensions
 
           // Calculate electric field q'E_k
-          Ek[dim] = ((xx[index1]-specie[spe].xval[dim][j])*Ex[dim][index] + \
-            (specie[spe].xval[dim][j]-xx[index])*Ex[dim][index1])/DX ;
+          p1 = xx[index1]-(*it1[dim]) ;
+          p2 = (*it1[dim])-xx[index] ;
+          Ek[dim] = (p1*Ex[dim][index] + p2*Ex[dim][index1]) ;
           Ek[dim] *= ql ;
 
-          u[dim] = specie[spe].pval[dim][j] + Ek[dim] ;
+          u[dim] = *it2[dim] + Ek[dim] ;
 
           // Calculate h vector (Wiki notation)
-          h[dim] = ql*Bx[dim][index] ; //????
+          h[dim] = ql*(p1*Bx[dim][index]+p2*Bx[dim][index1]) ; //????
 
           // Calculate s vector (Wiki notation)
           s[dim] = 2*h[dim] ;
-
-          // u = v_{k-1/2}+q'E_k
-          u[spe][dim] = specie[spe].xval[dim] ;
         }
 
         // Finish s calculation
         double aux = 1. ;
-        for ( dim = 0 ; dim < NDIM ; dim ++ ) aux += h[dim]*h[dim];
-        for ( dim = 0 ; dim < NDIM ; dim ++ ) s[dim] /= aux ;
+        for ( int dim = 0 ; dim < NDIM ; dim ++ ) aux += h[dim]*h[dim];
+        for ( int dim = 0 ; dim < NDIM ; dim ++ ) ul[dim] /= aux ;
 
-        
+        // Calculate u'
+        CrossProduct(u,h,auxV1);
+        for ( int dim = 0 ; dim < NDIM ; dim ++ ) auxV1[dim] += u[dim] ;
+
+        CrossProduct(auxV1,s,auxV2);
+        for ( int dim = 0 ; dim < NDIM ; dim ++ ) {
+          ul[dim] += u[dim] + auxV2[dim];
+
+          // Calculate v_{l+1/2}
+          pval1[spe][dim][j] = ul[dim] + Ek[dim];
+
+          //Calculate x_{k+1}
+          xval1[spe][dim][j] = (*it1[dim])+dt*pval1[spe][dim][j];
+
+          // Incremente interators
+          it1[dim]++;
+          it2[dim]++;
+        }
+
+        // Upgrade data
+        for ( int j = 1 , k = 0 ; j < num ; j++ , k++ ){
+          it1[dim] = specie[spe].xval[dim]->begin() ;
+          if ( xval1[j] < xval1[k] ) // Swap necessary
+        }
+
       }
 
     }
-
-    ComputePosVel();
-    if ( i % NDUMP == 0 ){
-      if( !PrintDiagnostics(t) ){
-        std::cout << "Error in printing the output files." << std::endl ;
-        exit(1);
-      }
-    }
   }
 
-  // Free memory of auxiliary vectors
-  for ( int i = 0 ; i < NSPE ; i++ ){
-    for ( int j = 0 ; j < NDIM ; j++ ){
-      delete[] pval1 ; delete[] xval1 ;
-
-      delete[] u ;
+  // Free memory
+  for( int i = 0 ; i < NSPE ; i++ )
+    for( int j = 0 ; j < NDIM ; j++ ){
+      delete[] pval1[i][j] ;
+      delete[] xval1[i][j] ;
     }
-  }
 
 }
 

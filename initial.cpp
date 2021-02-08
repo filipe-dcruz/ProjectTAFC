@@ -14,6 +14,9 @@ double* field_var[NFIELDS] ;
 
 char output_file[MAX_FILE_NAME] = "output.txt" ;
 
+char density_files[NSPE][MAX_FILE_NAME] ;
+char val_files[NSPE][MAX_FILE_NAME] ;
+
 /*
   Initiate parameters for the simulation ;
 */
@@ -47,8 +50,7 @@ int CheckParameters( void ){
   // Check if species names are repeated
   for( int i = 0 ; i < NSPE ; i++ ){
     for( int j = i+1 , k ; j < NSPE ; j++ ){
-
-      for ( int k = 0 ; k < NAME_LIMIT && specie[i].name[k] && specie[j].name[k] ; k++ )
+      for ( k = 0 ; k < NAME_LIMIT && specie[i].name[k] && specie[j].name[k] ; k++ )
         if( specie[i].name[k] != specie[j].name[k] ) break ;
 
       if( k == NAME_LIMIT || (!specie[i].name[k] && !specie[j].name[k]) ){
@@ -90,7 +92,6 @@ int CheckParameters( void ){
       }
 
   }
-
   return 0. ;
 }
 
@@ -98,6 +99,9 @@ int CheckParameters( void ){
   Define grids and variables to be used.
 */
 void InitialDefinitions( const char * dir ){
+
+  // Seed for random numer
+  srand (time(NULL));
 
   // Get length of directory name
   int len = 0 ;
@@ -192,6 +196,34 @@ void InitialDefinitions( const char * dir ){
     output_file[j] = name_file[j] ;
 
   delete[] auxN ;
+
+  // Output files for Particles
+  for( int i = 0 ; i < NSPE ; i++ ){
+    int m ;
+    for ( int j = 0 ; j < len2 ; j++ ){
+      density_files[i][j] = name_file[j] ;
+      val_files[i][j] = name_file[j] ;
+    }
+
+    l = 0 ;
+    while(specie[i].name[l++]); l-- ;
+    m = len2 + l ;
+
+    for ( int j = len2 , k = 0 ; k < l ; j++ , k++ ){
+      density_files[i][j] = specie[i].name[k] ;
+      val_files[i][j] = specie[i].name[k] ;
+    }
+
+    l = 0 ; while(density_name[l++]); l-- ;
+    for( int j = m, k = 0 ; k < l ; j++ , k++ )
+      density_files[i][j] = density_name[k] ;
+
+    l = 0 ; while(val_name[l++]); l-- ;
+    for( int j = m, k = 0 ; k < l ; j++ , k++ )
+      val_files[i][j] = val_name[k] ;
+
+  }
+
 }
 
 /*

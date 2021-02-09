@@ -2,13 +2,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-label = "results/ions-density.txt"
+dir = "results/"
+label = ["ions-density.txt","electrons-density.txt"]
+num = len(label)
 
 # Open density file
-file = open(label,"rt")
+file = []*num
+Content = []*num
+CoList = []*num
 
-Content = file.read()
-CoList = Content.split("\n")
+# Read data from files
+for n in range(num) :
+
+    file[n] = open(dir+label[n],"rt")
+    Content[n] = file[n].read()
+    CoList[n] = Content[n].split("\n")
+
 
 # Scan files
 i = 0

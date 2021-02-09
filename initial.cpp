@@ -258,7 +258,6 @@ void CalculateTheDensity( void ){
         specie[i].density[k] += dx-aux ;
         it1++;
       }
-    //  std::cin.get() ;
     }
 
     // Right particles

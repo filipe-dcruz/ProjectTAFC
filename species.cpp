@@ -4,11 +4,13 @@
 void Species::CalculateLastParameters( double dx , double dt , double X0_ )
 {
   NParTot = int((xf-x0)/dx)*npar ; //Total number of particles
-  qc = den/npar ;
-  if ( rqm > 0. )
-    ql = rqm/2.*dt ;
+
+  if ( rqm > 0 )
+    qc = den/npar ;
   else
-    ql = rqm/2.*dt ;
+    qc = -den/npar ;
+
+  ql = rqm/2.*dt ;
 
   xf -= X0_ ;
   x0 -= X0_ ;

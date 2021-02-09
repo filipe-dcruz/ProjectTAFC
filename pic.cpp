@@ -110,7 +110,6 @@ void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
 
       // Where is the particle located
       int index = int(*it1[0]/dx) ;
-      if (index < 0) std::cout << "Here" << j << ' ' << *it1[0] <<' ' << num << ' '<<spe<< '\n';
       int index1 = index+1 ;
 
       //In the case that the particles are in right border
@@ -266,7 +265,6 @@ void GetFourierVectors( double* res ){
 
   // Create array for kappa and K
   double kappa , kk ;
-
   double aux3 = dx/(4.*aux1_);
 
   // Calculate values
@@ -386,7 +384,7 @@ void ComputePIC( const char * dir ){
     CalculateTheDensity() ;
 
     // Update electric field
-    for ( int j = 0 ; j < NX ; j++ ) Ex[0][j] = Ek1[j] ;
+    //for ( int j = 0 ; j < NX ; j++ ) Ex[0][j] = Ek1[j] ;
   }
 
   // Free memory

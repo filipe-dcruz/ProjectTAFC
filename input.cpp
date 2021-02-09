@@ -36,19 +36,19 @@ double InitialFields::EzInicial( double x )
 }
 
 //Auxiliary vectors for velocity
-static const double v0Aux1[NDIM] = {0.1,0.,0.} ;
-static const double v0Aux2[NDIM] = {-0.1,0.,0.} ;
+static const double v0Aux1[NDIM] = {0.05,0.,0.} ;
+static const double v0Aux2[NDIM] = {-0.05,0.,0.} ;
 static const double vthAux1[NDIM] = {0.001,0.001,0.001} ;
 static const double vthAux2[NDIM] = {0.01,0.01,0.01} ;
 
 // Define species
 Species specie[NSPE] = {
-   Species("ions"        ,100.,1,
+   Species("ions"        ,100.,10,
     v0Aux1,vthAux1,0.,3.0,1.),
-   Species("electrons"   ,-1. ,1,
-    v0Aux1,vthAux2,0.,3.0,1.),
-   Species("bg-ions"     ,100.,1,
+   Species("electrons"   ,-1. ,10,
+    v0Aux1,vthAux2,0.,3.0,1.)
+   /*Species("bg-ions"     ,100.,10,
     v0Aux2,vthAux1,3.0,6.0,1.),
-   Species("bg-electrons",-1. ,1,
-    v0Aux2,vthAux2,3.0,6.0,1.)
+   Species("bg-electrons",-1. ,10,
+    v0Aux2,vthAux2,3.0,6.0,1.)*/
 };

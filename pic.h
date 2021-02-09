@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <cmath>
 
 #include "input.h"
 #include "initial.h"
@@ -20,6 +21,10 @@ bool PrintDiagnostics(double,double***) ;
 void CalculateNewPosVel( double*** , double*** ) ;
 
 void UpdateData( double*** , double*** ) ;
+
+void GetFourierVectors( double* ) ;
+
+void FieldSolver( double * , double * ) ;
 
 void ComputePIC( const char *) ;
 

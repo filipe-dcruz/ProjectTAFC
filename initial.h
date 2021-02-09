@@ -19,15 +19,12 @@
 
 #define MAX_FILE_NAME 30
 
-// Auxiliary
-const int NX1 = NX-1 , NX2 = NX-2;
-
 // Name of directory
 extern char* name_file ;
 
 // Secundaty parameters
 static const double BOX = XF-X0 ;
-static const double dx = BOX/NX ;
+static const double dx = BOX/NX , _dx2 = 1/(dx*2.) ;
 static const double dt = dx*CVAL ; // Spatial and time steps
 
 //Declare grid for electromagnetic fields
@@ -43,6 +40,11 @@ extern char density_files[NSPE][MAX_FILE_NAME] ;
 static const char density_name[MAX_FILE_NAME] = "-density.txt" ;
 extern char val_files[NSPE][MAX_FILE_NAME] ;
 static const char val_name[MAX_FILE_NAME] = "-val.txt" ;
+
+// Auxiliary
+const int NX1 = NX-1 , NX2 = NX-2;
+const double dif1 = 2*M_PI/NX , dif2 = dif1/2. ;
+const double aux_ = 2*M_PI/BOX , aux1_ = 1/dx ;
 
 // Auxiliary Functions
 int CheckParameters( void ) ;

@@ -1,56 +1,66 @@
+/**
+    Declares the class Species that contains the information for each specie
+    of particles.
+    This declaration was not necessary, but it was used to better organize the
+    code and to use the private attributes.
+
+    @file species.h
+    @author Filipe Cruz
+*/
 #ifndef SPECIES_HEADER
 #define SPECIES_HEADER
 
-#include <list>
 #include <cstdlib>
 #include <iostream>
 
-#define NAME_LIMIT 20
-#define NDIM 3
+#define NAME_LIMIT 20       /*Maximum size for the name of the particles*/
+#define NDIM 3              /*Number of dimensions-Auxiliar*/
 
-typedef unsigned int uint ;
-typedef std::list<double>::iterator itr ;
-typedef std::list<double> type ;
+//typedef unsigned int uint ;
 
 /*
-  Define Species that contains the information of the initial and contant
-  values for each specie.
+  Define Species that contains the information of the initial configurations
+  and contant values for each specie od particles.
 */
 class Species{
-  uint NParTot ;
-  double qc ;
-  double ql ;
+  int NParTot ;             // Total number of particles
+  double qc ;               // Cloud charge
+  double ql ;               // q' value for the Boris pusher
 
+  // Calculates the values of auxiliar parameters
   void CalculateLastParameters ( double , double , double ) ;
 
 public:
   // Variables
   // Global
-  char name [NAME_LIMIT]; // Name of species
-  const double rqm ;       // q/m ratio
-  const uint npar ; //Number of particles per cell of this specie
+  char name [NAME_LIMIT];   // Name of species
+  const double rqm ;        // q/m ratio
+  const int npar ;          // Number of particles per cell
 
   // Velocity
-  const double v0[NDIM] ;
-  const double vth[NDIM] ;
+  const double v0[NDIM] ;   // Fluid velocities
+  const double vth[NDIM] ;  // Thermal vecloities
 
-  double x0, xf ;
-  const double den ;
+  double x0, xf ;           // Vondaries of the uniform distibution
+  const double den ;        // Initial uniform density
 
   // Arrays
-  std::list<double>* pval[NDIM] ;
-  std::list<double>* xval[NDIM] ;
+  double* pval[NDIM] ;      // Mommentum for each particles - dynamic
+  double* xval[NDIM] ;      // Position for each particles - dynamic
 
-  double * density ;
+  double * density ;        // Density distribution - dynamic
 
-  //Functions
-  Species( const char*, const double, const uint, const double*, const double*,
+  // Costructor for the species
+  Species( const char*, const double, const int, const double*, const double*,
     const double, const double, const double ) ;
   ~Species () ;
 
-  void CreateList( uint , double , double , double ) ;
+  // Allocates the memory for the particles
+  void CreateList( int , double , double , double ) ;
 
-  uint NumOfPar(){ return NParTot ; };
+  // Auxiliary functions. They were created to avoid an acidental change of
+  // these calculated parameters
+  int NumOfPar(){ return NParTot ; };
   double qlvalue(){ return ql ; };
   double qcvalue(){ return qc ; };
 };

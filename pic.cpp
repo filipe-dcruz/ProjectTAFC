@@ -1,79 +1,82 @@
+/**
+    Files responsible by the particle in cell algorith
+    @file pic.cpp
+    @author Filipe Cruz
+**/
+
 #include "pic.h"
 
+/*
+  Print the results for a time step in the output files
+  @param
+    t     : time value of iteration
+    pval1 : v_{k+1/2} data
+  @return if the print was successful
+*/
 bool PrintDiagnostics( double t, double* pval1[NSPE][NDIM] ){
 
+  // Offset
   static const double xini[NDIM] = {X0,0.,0.} ;
 
-  std::cout << "DUMP at t = " << t << '\n';
-
   static std::ofstream file , file2 ;
+  static int numOfParticles , aux , random ;
 
-  static int aux , aux2 , random ;
-
-  itr it1[NDIM] , it2[NDIM] ;
-  double* it3[NDIM] ;
+  std::cout << "DUMP at t = " << t << '\n';
 
   // Print field values
   for ( int j = 0 ; j < NFIELDS ; j++ ){
 
+    // Open files
     file.open(field_files[j], std::ios::app );
     if ( !file ) return false ;
 
+    // Print time
     file << "t = " << t << std::endl ;
 
+    // Print x and data of files
     for( int i = 0 ; i < NX ; i++ )
-      file << xx[i]-xini[0] << ' ' << field_var[j][i] << std::endl ;
-
+      file << xx[i]+xini[0] << ' ' << field_var[j][i] << std::endl ;
     file << std::endl ;
+
+    // close file
     file.close();
   }
 
   // Print particles values
   for ( int j = 0 ; j < NSPE ; j++ ){
 
+    // Open particle files
     file.open(density_files[j], std::ios::app );
     file2.open(val_files[j], std::ios::app );
-
     if ( !file || !file2 ) return false ;
 
     // Print to density files
     file << "t = " << t << std::endl ;
     for( int i = 0 ; i < NX ; i++ )
-      file << xx[i]-xini[0] << ' ' << specie[j].density[i] << std::endl ;
+      file << xx[i]+xini[0] << ' ' << specie[j].density[i] << std::endl ;
 
     // Print to x and p files
     file2 << "t = " << t << std::endl ;
-    aux = specie[j].NumOfPar() ;
-    aux2 = int(double(aux)*DUMP_PER) ;
+    numOfParticles = specie[j].NumOfPar() ;
+    aux = int(double(numOfParticles)*DUMP_PER) ;
 
-    for ( int k = 0 ; k < NDIM ; k++ ){
-      it1[k] = specie[j].xval[k]->begin();
-      it2[k] = specie[j].pval[k]->begin();
-      it3[k] = pval1[j][k];
-    }
-
-    while( it1[0] != specie[j].xval[0]->end() ){
+    for ( int k = 0 ; k < numOfParticles ; k++ ){
 
       // Obtain random to determine which particles to report
-      random = rand() % aux ;
+      random = rand() % numOfParticles ;
 
-      if ( random < aux2 ){
-        for ( int k = 0 ; k < NDIM ; k++ )
-          file2 << (*it1[k])-xini[k] << ' ' ;
-        for ( int k = 0 ; k < NDIM ; k++ )
-          file2 << ((*it2[k])+(*it3[k]))/2. << ' ' ;
+      // Print data to file
+      if ( random < aux ){
+        for ( int l = 0 ; l < NDIM ; l++ )
+          file2 << specie[j].xval[l][k]+xini[l] << ' ' ;
+        for ( int l = 0 ; l < NDIM ; l++ )
+          file2 << (specie[j].pval[l][k]+pval1[j][l][k])/2. << ' ' ;
         file2 << std::endl ;
       }
 
-      // increment iterators
-      for ( int k = 0 ; k < NDIM ; k++ ) {
-        it1[k]++;
-        it2[k]++;
-        it3[k]++;
-      }
-
     }
 
+    // Close files
     file.close();
     file2.close();
   }
@@ -81,51 +84,63 @@ bool PrintDiagnostics( double t, double* pval1[NSPE][NDIM] ){
   return true ;
 }
 
+/*
+  Calculates the phase space data for the next iteration
+  @param location to store the new data
+*/
 void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
 
-  //Auxiliary variable
+  // Auxiliary variables
   static double ql ;
   static int num ;
 
   // Proportions
   static double p1, p2 ;
 
-  static itr it1[NDIM] , it2[NDIM] , it11[NDIM] , it21[NDIM] ;
-
   // Auxiliary vectors for Boris Pusher
   static double u[NDIM] , h[NDIM] , s[NDIM], ul[NDIM] ;
   static double Ek[NDIM] , auxV[NDIM] ;
 
-  //Step 1 - Compute new positions
+  // Step 1 - Compute new positions
+  // Scan species
   for( int spe = 0 ; spe < NSPE ; spe++ ){ // Loop species
+
     num = specie[spe].NumOfPar() ; //Number of Particles of specie.
-    ql = specie[spe].qlvalue() / dx ;
+    ql = specie[spe].qlvalue() ;
 
-    for ( int dim = 0 ; dim < NDIM ; dim++ ){
-      it1[dim] = specie[spe].xval[dim]->begin() ;
-      it2[dim] = specie[spe].pval[dim]->begin() ;
-    }
-
-    for( int j = 0 ; j < num ; j++ ){ // Particles are in order.
+    // Scan number of particles
+    for( int j = 0 ; j < num ; j++ ){
 
       // Where is the particle located
-      int index = int(*it1[0]/dx) ;
+      int index = int(specie[spe].xval[0][j]/dx-0.5) ;
       int index1 = index+1 ;
 
       //In the case that the particles are in right border
-      if ( index == NX ) index1 = 0 ;
-
-      for( int dim = 0 ; dim < NDIM ; dim++ ){ //Scan dimensions
+      if ( index1 == NX ) {
+        index1 = 0 ;
+        p1 = BOX+xx[index1]-specie[spe].xval[0][j] ;
+        p2 = specie[spe].xval[0][j]-xx[NX1] ;
+      }
+      else if ( index == -1 ){
+        index = NX1 ;
+        p1 = xx[0]-specie[spe].xval[0][j] ;
+        p2 = specie[spe].xval[0][j]-xx[NX1]+BOX ;
+      }
+      else{
         // Calculate electric field q'E_k
-        p1 = xx[index1]-(*it1[dim]) ;
-        p2 = (*it1[dim])-xx[index] ;
-        Ek[dim] = (p1*Ex[dim][index] + p2*Ex[dim][index1]) ;
-        Ek[dim] *= ql ;
+        p1 = xx[index1]-specie[spe].xval[0][j] ;
+        p2 = specie[spe].xval[0][j]-xx[index] ;
+      }
 
-        u[dim] = *it2[dim] + Ek[dim] ;
+      //Scan dimensions
+      for( int dim = 0 ; dim < NDIM ; dim++ ){
+
+        Ek[dim] = (p1*Ex[dim][index] + p2*Ex[dim][index1])*ql ;
+
+        u[dim] = specie[spe].pval[dim][j] + Ek[dim] ;
 
         // Calculate h vector (Wiki notation)
-        h[dim] = ql*(p1*Bx[dim][index]+p2*Bx[dim][index1]) ; //????
+        h[dim] = ql*(p1*Bx[dim][index]+p2*Bx[dim][index1]) ;
 
         // Calculate s vector (Wiki notation)
         s[dim] = 2*h[dim] ;
@@ -142,37 +157,36 @@ void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
 
       CrossProduct(auxV,s,ul);
       for ( int dim = 0 ; dim < NDIM ; dim ++ ) {
+
         ul[dim] += u[dim] ;
 
         // Calculate v_{l+1/2}
         pval1[spe][dim][j] = ul[dim] + Ek[dim];
 
         //Calculate x_{k+1}
-        xval1[spe][dim][j] = (*it1[dim])+dt*pval1[spe][dim][j];
+        xval1[spe][dim][j] = specie[spe].xval[dim][j]+dt*pval1[spe][dim][j];
 
-        // Incremente interators
-        it1[dim]++;
-        it2[dim]++;
       }
     }
   }
-
 }
 
+/*
+  Update the phase data with the next iteration data
+  @param New data
+*/
 void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
-
-  //static const double offset[NDIM] = {BOX,0.,0.};
 
   static int num ;
   static double ql ;
 
-  static itr it1[NDIM] , it2[NDIM] , it11[NDIM] , it21[NDIM] ;
-
+  // Scan particles species
   for( int spe = 0 ; spe < NSPE ; spe++ ){ // Loop species
+
     num = specie[spe].NumOfPar() ; //Number of Particles of specie.
     ql = specie[spe].qlvalue() / dx ;
 
-    // In case of borders
+    // In case of borders change x values
     for ( int j = 0 ; j < num ; j++ ){
       if ( xval1[spe][0][j] < 0 )
         xval1[spe][0][j] += BOX ;
@@ -180,169 +194,29 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
         xval1[spe][0][j] -= BOX ;
     }
 
-    // New sorting algorithm
-    // Set iterators to Upgrade data
+    // Scan particles
     for ( int dim = 0 ; dim < NDIM ; dim++ ){
-      it1[dim] = specie[spe].xval[dim]->begin() ;
-      it2[dim] = specie[spe].pval[dim]->begin() ;
-
-      // Scan particles
-      // Update particles
-      for ( int j = 0 ; j < num ; j++ ){
-        (*it1[dim]) = xval1[spe][dim][j] ;
-        (*it2[dim]) = pval1[spe][dim][j] ;
-        it1[dim]++; it2[dim]++;
-      }
-
-      it1[dim] = specie[spe].xval[dim]->begin() ;
-      it2[dim] = specie[spe].pval[dim]->begin() ;
-      it1[dim]++; it2[dim]++;
-    }
-
-    // Sort arrays
-    for ( int j = 1 ; j < num ; j++ ){
-
-      // Point to particle to sort
-      for ( int dim = 0 ; dim < NDIM ; dim ++ ){
-        it11[dim] = specie[spe].xval[dim]->begin() ;
-        it21[dim] = specie[spe].pval[dim]->begin() ;
-      }
-
-      // Sort place of particle
-      for ( int k = 0 ; k < j ; k++ ){
-        if ( *it11[0] > *it1[0] ){ // Found place
-          // Update iterators
-          for ( int dim = 0 ; dim < NDIM ; dim++ ){
-            specie[spe].xval[dim]->insert(it11[dim],*it1[dim]) ; // Add Last
-            specie[spe].pval[dim]->insert(it21[dim],*it2[dim]) ; // Add Last
-            //it21[dim] = it2[dim] ; it21[dim]++ ;
-            //it11[dim] = it1[dim] ; it11[dim]++ ;
-            //it1[dim] = specie[spe].xval[dim]->erase(it11[dim]) ; // Remove first
-            it2[dim] = specie[spe].pval[dim]->erase(it21[dim]) ; // Remove first
-          }
-          break ;
-        }
-
-        // Increment iterator
-        for ( int dim = 0 ; dim < NDIM ; dim ++ ){
-          it11[dim]++;
-          it21[dim]++;
-        }
-
-      }
-
-      for ( int dim = 0 ; dim < NDIM ; dim ++ ){
-        it1[dim]++;
-        it2[dim]++;
-      }
-
-    }
-    if ( spe == 0 ){
-      it11[0] = specie[spe].xval[0]->begin() ;
-      for (int a = 0 ; a < num ;  a++ )
-        std::cout << 'a'<<*(it11[0]++)<< ' ' <<a <<' '<< num << '\n';
-      std::cin.get();
-    }
-
-
-    // Set iterators to Upgrade data
-/*    for ( int dim = 0 ; dim < NDIM ; dim++ ){
-      it11[dim] = specie[spe].xval[dim]->begin() ;
-      it21[dim] = specie[spe].pval[dim]->begin() ;
-      it1[dim] = it11[dim]++ ;
-      it2[dim] = it21[dim]++ ;
-
-      // update the first elements j = 0
-      (*it1[dim]) = xval1[spe][dim][0] ;
-      (*it2[dim]) = pval1[spe][dim][0] ;
-    }
-
-    // Upgrade data
-    for ( int j = 1 , k = 0 ; j < num ; j++ , k++ ){
-      // Update values
-      for ( int dim = 0 ; dim < NDIM ; dim++ ){
-        (*it11[dim]) = xval1[spe][dim][j] ;
-        (*it21[dim]) = pval1[spe][dim][j] ;
-      }
-
-      // Swap necessary particles
-      if ( xval1[spe][0][j] < xval1[spe][0][k] ){//////////////
-        for ( int dim = 0 ; dim < NDIM ; dim++ ){
-          std::swap(*it1[dim],*it11[dim]) ;
-          std::swap(*it2[dim],*it21[dim]) ;
-          it1[dim]++; it11[dim]++;
-          it2[dim]++; it21[dim]++;
-        }
-        j++; k++;
-      }
-
-      //Increment iterators
-      if ( j < num ){ // If there is no more elements
-        for ( int dim = 0 ; dim < NDIM ; dim++ ){
-          it1[dim]++ ;
-          it2[dim]++ ;
-          it21[dim]++;
-          it11[dim]++;
-        }
-      }
-
-    }
-
-
-    // Auxiliary
-    for ( int dim = 0 ; dim < NDIM ; dim++ ){
-      it1[dim] = specie[spe].xval[dim]->begin() ;
-      it2[dim] = specie[spe].pval[dim]->begin() ;
-      it11[dim] = specie[spe].xval[dim]->end() ;
-      it21[dim] = specie[spe].pval[dim]->end() ;
-      it11[dim]-- ;
-      it21[dim]-- ;
-    }
-
-    bool t1 = (*(it1[0]) < 0.) , t2 = (*(it11[0]) > BOX);
-
-    // Swap border particles
-    // If first passed to last
-    if( t1 && t2 ){ // Swap both ends
-      for ( int dim = 0 ; dim < NDIM ; dim++ ){
-        *(it1[dim]) += offset[dim] ;
-        *(it11[dim]) -= offset[dim] ;
-        std::swap(*(it1[dim]),*(it11[dim])) ;
-        std::swap(*(it2[dim]),*(it21[dim])) ;
+      for ( int j = 1 ; j < num ; j++ ){
+        specie[spe].xval[dim][j] = xval1[spe][dim][j] ;
+        specie[spe].pval[dim][j] = pval1[spe][dim][j] ;
       }
     }
-    else if ( t1 ){
-      for ( int dim = 0 ; dim < NDIM ; dim++ ){
-        *(it1[dim]) += offset[dim] ;
-        specie[spe].xval[dim]->push_back(*(it1[dim])) ; // Add Last
-        specie[spe].pval[dim]->push_back(*(it2[dim])) ; // Add Last
-        specie[spe].xval[dim]->pop_front() ;            // Remove first
-        specie[spe].pval[dim]->pop_front() ;            // Remove first
-      }
-    }
-    else if ( t2 ){
-      for ( int dim = 0 ; dim < NDIM ; dim++ ){
-        *(it11[dim]) -= offset[dim] ;
-        specie[spe].xval[dim]->push_front(*(it11[dim])) ; // Add First
-        specie[spe].pval[dim]->push_front(*(it21[dim])) ; // Add First
-        specie[spe].xval[dim]->pop_back() ;            // Remove Last
-        specie[spe].pval[dim]->pop_back() ;            // Remove Last
-      }
-    }
-*/
   }
 
 }
 
-// Get vectors that will be used to calculate the field
+/*
+  Calculate a set of constants as function of k once, to increase efficiency
+  @param vector to store teh data
+*/
 void GetFourierVectors( double* res ){
 
   // Create array for kappa and K
   double kappa , kk ;
-  double aux3 = dx/(4.*aux1_);
+  static const double aux3 = dx/(4.*aux1_);
 
   // Calculate values
-  res[0] = 0. ;
+  res[0] = 0. ; // consideres for k=0 zero
   for ( int i = 1 ; i < NX ; i++ ){
     kappa = sin(dif1*i) ;
     kk = sin(dif2*i)*sin(dif2*i) ;
@@ -351,6 +225,12 @@ void GetFourierVectors( double* res ){
 
 }
 
+/*
+  Calculates the next values for the electric field
+  @param
+    res  : auxiliar value with constants calculated previosly
+    Ek   : array to store the field
+*/
 void FieldSolver( double * res , double * Ek ){
 
   double auxn , aux2 ;
@@ -360,7 +240,7 @@ void FieldSolver( double * res , double * Ek ){
   static double phikr[NX] , phiki[NX] ;
   static double rho[NX] ;
 
-  // Calculate total density
+  // Calculate the total density
   for ( int i = 0 ; i < NX ; i++ )
     rho[i] = specie[0].density[i] ;
   for ( int j = 1 ; j < NSPE ; j++ )
@@ -398,27 +278,26 @@ void FieldSolver( double * res , double * Ek ){
     Ek[i] /= BOX ;
   }
 
-  /*Ek1[0] = _dx2*(phi[NX1]-phi[1]) ;
-  Ek1[NX1] = _dx2*(phi[NX2]-phi[0]) ;
-  for ( int i = 1 , j = 2 , k = 0 ; i < NX1 ; i++ , k++, l++ )
-    for Ek1[i] = _dx2*(phi[k]-phi[j]) ;
-  */
 }
 
 /*
-  Compute Particle-In-Cell
+  Compute Particle-In-Cell the particle in cell algorith
+  @param
+    dir  : name of the ouput directory
 */
 void ComputePIC( const char * dir ){
 
-  // k+1 variables
+  // phase space k+1 variables
   double* pval1[NSPE][NDIM] ;
   double* xval1[NSPE][NDIM] ;
 
   // E_{k+1}
-  double* res = new double[NX] ;
   double* Ek1 = new double[NX] ;
 
-  //Auxiliary variable
+  // Auxiliar array
+  double* res = new double[NX] ;
+
+  //Auxiliary variables
   double ql ;
   int num ;
 
@@ -434,7 +313,7 @@ void ComputePIC( const char * dir ){
 
   // Run each time steps of the PIC code
   int i = 0 ;
-  for ( double t = 0. ; t < TMAX ; t += dt , i++ ){ // Time steps
+  for ( double t = TMIN ; t < TMAX ; t += dt , i++ ){ // Time steps
 
     // Boris pusher
     CalculateNewPosVel(xval1,pval1) ;
@@ -458,7 +337,7 @@ void ComputePIC( const char * dir ){
     CalculateTheDensity() ;
 
     // Update electric field
-    //for ( int j = 0 ; j < NX ; j++ ) Ex[0][j] = Ek1[j] ;
+    for ( int j = 0 ; j < NX ; j++ ) Ex[0][j] = Ek1[j] ;
   }
 
   // Free memory
@@ -473,10 +352,16 @@ void ComputePIC( const char * dir ){
 
 }
 
+/*
+  Function responsable in createing the file with the configuration parameters
+*/
 void ProduceDiagnostics(){
+
+  // Open output file
   std::ofstream file ;
   file.open(output_file,std::ios::app);
 
+  // Check if file opened
   if( !file ){
     std::cout << "ERROR: There was a problem opening the output file." << '\n';
     exit(1) ;
@@ -492,16 +377,20 @@ void ProduceDiagnostics(){
   file << "DT = " << dt << std::endl ;
   file << "TMAX = " << TMAX << std::endl ;
 
+  // Close file
   file.close() ;
 
   std::cout << "Output file created with success." << '\n';
 }
 
+/*
+  Function responsable in performing the 1D electrostatic PIC code
+  @param
+    dir   : name of the directory for the output results
+*/
 void PIC1D( const char * dir = "results/"){
 
-  std::cout << "dir" << dir << '\n';
-
-  // initiate parameters
+  // Creates files and directory for the results
   std::cout << "\n--STARTING PROGRAM--\n" << std::endl ;
   InitialDefinitions( dir );
 
@@ -524,8 +413,14 @@ void PIC1D( const char * dir = "results/"){
   return;
 }
 
+/*
+  main function, necessary to start the code. The location of the output
+  directory can be given as an argument.
+*/
 int main(int argc, char const *argv[]) {
-	//Run PIC code
+
+  // Run PIC code
+  // Checks if a directory name was given and executes PIC simulation
   if ( argc > 1 )
     PIC1D(argv[1]) ;
   else

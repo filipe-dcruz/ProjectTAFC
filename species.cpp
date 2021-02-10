@@ -4,7 +4,7 @@
 
     @file species.cpp
     @author Filipe Cruz
-*/
+**/
 
 #include "species.h"
 
@@ -23,12 +23,12 @@ void Species::CalculateLastParameters( double dx , double dt , double X0_ )
   // Calculate cloud charge of the particle.
   // Negative for negative charged particles
   if ( rqm > 0 )
-    qc = den/npar ;
+    qc = den/npar/dx ;
   else
-    qc = -den/npar ;
+    qc = -den/npar/dx ;
 
   // Auxiliar paramenter for the Boris pusher
-  ql = rqm/2.*dt ;
+  ql = rqm/2.*dt/dx ;
 
   // Subtraxts the left boundary of the particle to increase efficiency
   xf -= X0_ ;
@@ -47,7 +47,7 @@ void Species::CalculateLastParameters( double dx , double dt , double X0_ )
     _xf     : initial right spatial value for the specie distibution
     _den    : density of the uniform distribution
 */
-Species::Species(const char *_name , const double _rqm, const uint _npar ,
+Species::Species(const char *_name , const double _rqm, const int _npar ,
   const double* _v0, const double* _vth,
   const double _x0, const double _xf, const double _den ):
   rqm(_rqm), npar(_npar),

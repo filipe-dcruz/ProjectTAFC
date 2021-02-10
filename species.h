@@ -6,7 +6,7 @@
 
     @file species.h
     @author Filipe Cruz
-*/
+**/
 #ifndef SPECIES_HEADER
 #define SPECIES_HEADER
 

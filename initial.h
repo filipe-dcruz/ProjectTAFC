@@ -17,6 +17,8 @@
 #define RM1 6
 #define RM2 5
 
+#define MAX_PASS 5
+
 #define MAX_FILE_NAME 30
 
 // Name of directory

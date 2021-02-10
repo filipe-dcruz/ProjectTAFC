@@ -3,7 +3,7 @@
 
 #include "species.h"
 
-#define NSPE 2  /*Number of species*/
+#define NSPE 4  /*Number of species*/
 #define NCOR 4  /*Number of cores  */
 
 static const double CVAL = 0.995 ; // Courant number

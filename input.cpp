@@ -43,12 +43,12 @@ static const double vthAux2[NDIM] = {0.01,0.01,0.01} ;
 
 // Define species
 Species specie[NSPE] = {
-   Species("ions"        ,100.,5,
-    v0Aux1,vthAux1,0.0,5.5,1.),
-   Species("electrons"   ,-1. ,5,
-    v0Aux1,vthAux2,0.0,5.5,1.)
-   /*Species("bg-ions"     ,100.,5,
-    v0Aux2,vthAux1,4.5,5.0,1.),
-   Species("bg-electrons",-1. ,5,
-    v0Aux2,vthAux2,4.5,5.0,1.)*/
+   Species("ions"        ,100.,10,
+    v0Aux1,vthAux1,5.0,6.0,1.),
+   Species("electrons"   ,-1. ,10,
+    v0Aux1,vthAux2,5.0,6.0,1.),
+   Species("bg-ions"     ,100.,10,
+    v0Aux2,vthAux1,3.0,6.0,1.),
+   Species("bg-electrons",-1. ,10,
+    v0Aux2,vthAux2,3.0,6.0,1.)
 };

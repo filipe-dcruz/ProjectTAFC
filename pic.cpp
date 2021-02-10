@@ -161,7 +161,7 @@ void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
 
 void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
 
-  static const double offset[NDIM] = {BOX,0.,0.};
+  //static const double offset[NDIM] = {BOX,0.,0.};
 
   static int num ;
   static double ql ;
@@ -172,8 +172,81 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
     num = specie[spe].NumOfPar() ; //Number of Particles of specie.
     ql = specie[spe].qlvalue() / dx ;
 
+    // In case of borders
+    for ( int j = 0 ; j < num ; j++ ){
+      if ( xval1[spe][0][j] < 0 )
+        xval1[spe][0][j] += BOX ;
+      else if ( xval1[spe][0][j] > BOX )
+        xval1[spe][0][j] -= BOX ;
+    }
+
+    // New sorting algorithm
     // Set iterators to Upgrade data
     for ( int dim = 0 ; dim < NDIM ; dim++ ){
+      it1[dim] = specie[spe].xval[dim]->begin() ;
+      it2[dim] = specie[spe].pval[dim]->begin() ;
+
+      // Scan particles
+      // Update particles
+      for ( int j = 0 ; j < num ; j++ ){
+        (*it1[dim]) = xval1[spe][dim][j] ;
+        (*it2[dim]) = pval1[spe][dim][j] ;
+        it1[dim]++; it2[dim]++;
+      }
+
+      it1[dim] = specie[spe].xval[dim]->begin() ;
+      it2[dim] = specie[spe].pval[dim]->begin() ;
+      it1[dim]++; it2[dim]++;
+    }
+
+    // Sort arrays
+    for ( int j = 1 ; j < num ; j++ ){
+
+      // Point to particle to sort
+      for ( int dim = 0 ; dim < NDIM ; dim ++ ){
+        it11[dim] = specie[spe].xval[dim]->begin() ;
+        it21[dim] = specie[spe].pval[dim]->begin() ;
+      }
+
+      // Sort place of particle
+      for ( int k = 0 ; k < j ; k++ ){
+        if ( *it11[0] > *it1[0] ){ // Found place
+          // Update iterators
+          for ( int dim = 0 ; dim < NDIM ; dim++ ){
+            specie[spe].xval[dim]->insert(it11[dim],*it1[dim]) ; // Add Last
+            specie[spe].pval[dim]->insert(it21[dim],*it2[dim]) ; // Add Last
+            //it21[dim] = it2[dim] ; it21[dim]++ ;
+            //it11[dim] = it1[dim] ; it11[dim]++ ;
+            //it1[dim] = specie[spe].xval[dim]->erase(it11[dim]) ; // Remove first
+            it2[dim] = specie[spe].pval[dim]->erase(it21[dim]) ; // Remove first
+          }
+          break ;
+        }
+
+        // Increment iterator
+        for ( int dim = 0 ; dim < NDIM ; dim ++ ){
+          it11[dim]++;
+          it21[dim]++;
+        }
+
+      }
+
+      for ( int dim = 0 ; dim < NDIM ; dim ++ ){
+        it1[dim]++;
+        it2[dim]++;
+      }
+
+    }
+    if ( spe == 0 ){
+      it11[0] = specie[spe].xval[0]->begin() ;
+      for (int a = 0 ; a < num ;  a++ )
+        std::cout << 'a'<<*(it11[0]++)<< ' ' <<a <<' '<< num << '\n';
+      std::cin.get();
+    }
+
+
+    // Set iterators to Upgrade data
+/*    for ( int dim = 0 ; dim < NDIM ; dim++ ){
       it11[dim] = specie[spe].xval[dim]->begin() ;
       it21[dim] = specie[spe].pval[dim]->begin() ;
       it1[dim] = it11[dim]++ ;
@@ -193,7 +266,7 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
       }
 
       // Swap necessary particles
-      if ( xval1[spe][0][j] < xval1[spe][0][k] ){
+      if ( xval1[spe][0][j] < xval1[spe][0][k] ){//////////////
         for ( int dim = 0 ; dim < NDIM ; dim++ ){
           std::swap(*it1[dim],*it11[dim]) ;
           std::swap(*it2[dim],*it21[dim]) ;
@@ -214,6 +287,7 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
       }
 
     }
+
 
     // Auxiliary
     for ( int dim = 0 ; dim < NDIM ; dim++ ){
@@ -255,7 +329,7 @@ void UpdateData( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM] ){
         specie[spe].pval[dim]->pop_back() ;            // Remove Last
       }
     }
-
+*/
   }
 
 }

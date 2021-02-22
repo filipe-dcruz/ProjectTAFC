@@ -112,7 +112,7 @@ void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
     for( int j = 0 ; j < num ; j++ ){
 
       // Where is the particle located
-      int index = int(specie[spe].xval[0][j]/dx-0.5) ;
+      int index = int(floor(specie[spe].xval[0][j]/dx-0.5)) ;
       int index1 = index+1 ;
 
       //In the case that the particles are in right border
@@ -129,7 +129,7 @@ void CalculateNewPosVel( double* xval1[NSPE][NDIM], double* pval1[NSPE][NDIM]) {
       else{
         // Calculate electric field q'E_k
         p1 = xx[index1]-specie[spe].xval[0][j] ;
-        p2 = specie[spe].xval[0][j]-xx[index] ;
+        p2 = specie[spe].xval[0][j]-xx[index]  ;
       }
 
       //Scan dimensions
@@ -216,10 +216,15 @@ void GetFourierVectors( double* res ){
   static const double aux3 = dx/(4.*aux1_);
 
   // Calculate values
-  res[0] = 0. ; // consideres for k=0 zero
-  for ( int i = 1 ; i < NX ; i++ ){
-    kappa = sin(dif1*i) ;
-    kk = sin(dif2*i)*sin(dif2*i) ;
+  // consideres for k=0 zero
+  double n1 = -double(NX/2) ;
+  for ( int i = 0 ; i < NX ; i++ , n1+=1.){
+    if( n1 == 0. ) {
+      res[i] = 0. ;
+      continue ;
+    }
+    kappa = sin(dif1*n1) ;
+    kk = sin(dif2*n1)*sin(dif2*n1) ;
     res[i] = aux3*kappa/kk ;
   }
 
@@ -236,7 +241,7 @@ void FieldSolver( double * res , double * Ek ){
   double auxn , aux2 ;
 
   // Components of the electric field
-  static double Er[NX], Ei[NX] ;
+  static double Er[NX], Ei[NX] , Eii[NX];
   static double phikr[NX] , phiki[NX] ;
   static double rho[NX] ;
 
@@ -248,18 +253,22 @@ void FieldSolver( double * res , double * Ek ){
       rho[i] += specie[j].density[i] ;
 
   // Calculate rho_k
-  for ( int n = 0 ; n < NX ; n++ ){
+  static const double n1_ = -double(NX/2.) ;
+  double n1 = n1_ ;
+  for ( int n = 0 ; n < NX ; n++ , n1+=1. ){
+
     phikr[n] = 0. ;
     phiki[n] = 0. ;
-    auxn = aux_*n ;
+    auxn = aux_*n1 ;
 
+    // Obtain \rho(k)/dx
     for ( int i = 0 ; i < NX ; i++ ){ // get each k
-      aux2 = auxn*xx[i];
+      aux2 = auxn*xx[i] ;
       phikr[n] += rho[i]*cos(aux2) ;
       phiki[n] -= rho[i]*sin(aux2) ;
     }
 
-    // Calculate poterntial in k
+    // Calculate potential in k
     phikr[n] *= res[n] ; phiki[n] *= res[n] ;
 
     // Multiply by -i
@@ -269,13 +278,22 @@ void FieldSolver( double * res , double * Ek ){
 
   // IFFT - real part
   for ( int i = 0 ; i < NX ; i++ ){
+
     Ek[i] = 0. ;
+    Eii[i] = 0. ;
     auxn = aux_*xx[i] ;
-    for ( int n = 0 ; n < NX ; n++ ){
-      aux2 = auxn*n ;
+
+    n1 = n1_ ;
+    for ( int n = 0 ; n < NX ; n++ , n1+=1.){
+      aux2 = auxn*n1 ;
       Ek[i] += (Er[n]*cos(aux2)-Ei[n]*sin(aux2)) ;
+      Eii[i] += (Er[n]*sin(aux2)+Ei[n]*cos(aux2)) ;
     }
+
     Ek[i] /= BOX ;
+    Eii[i] /= BOX ;
+
+    //std::cout << "E["<<i<<"] = " << Ek[i]<<" +i"<<Eii[i] << '\n';
   }
 
 }
@@ -293,6 +311,7 @@ void ComputePIC( const char * dir ){
 
   // E_{k+1}
   double* Ek1 = new double[NX] ;
+  for ( int i = 0 ; i < NX ; i++ ) Ek1[i] = 0. ;
 
   // Auxiliar array
   double* res = new double[NX] ;
@@ -334,6 +353,7 @@ void ComputePIC( const char * dir ){
     UpdateData(xval1,pval1) ;
 
     // Update density from the updated positions
+
     CalculateTheDensity() ;
 
     // Update electric field

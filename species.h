@@ -16,7 +16,7 @@
 #define NAME_LIMIT 20       /*Maximum size for the name of the particles*/
 #define NDIM 3              /*Number of dimensions-Auxiliar*/
 
-//typedef unsigned int uint ;
+typedef unsigned int uint ;
 
 /*
   Define Species that contains the information of the initial configurations

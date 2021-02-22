@@ -296,7 +296,7 @@ void CalculateTheDensity( void ){
     // Scan the particles
     for ( int k = 0 ; k < numOfParticles ; k++ ){
       // Get index of particle
-      index = int(specie[i].xval[0][k]/dx-0.5) ; // I need to look at the center
+      index = int(floor(specie[i].xval[0][k]/dx-0.5)) ; // I need to look at the center
       index1 = index+1 ;
 
       if( index1 == NX ) { // Particles at the right

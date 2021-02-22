@@ -11,6 +11,7 @@
 #include <random>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 #include <sys/stat.h>
 #include <sys/types.h>

@@ -28,7 +28,7 @@ void Species::CalculateLastParameters( double dx , double dt , double X0_ )
     qc = -den/npar/dx ;
 
   // Auxiliar paramenter for the Boris pusher
-  ql = rqm/2.*dt/dx ;
+  ql = 1/rqm/2.*dt/dx ;
 
   // Subtraxts the left boundary of the particle to increase efficiency
   xf -= X0_ ;
